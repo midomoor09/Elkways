@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>تسجيل بيانات الطلاب + بطاقة الحساب</title>
+<style>
+:root{--bg:#fff;--text:#1a1d23;--muted:#6b7280;--border:#e2e4e9;--accent:#2563eb;--accent-hover:#1d4ed8;--danger:#dc2626;--success:#16a34a;--gold:#b8860b;--green:#1a8f3c;--red:#c0392b;--card-border:#d1b35a;--soft:#f4f7fb;color-scheme:light}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:#fff;color:var(--text);font-family:"Segoe UI",Tahoma,Arial,sans-serif;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);min-height:100vh}
+.wrap{max-width:920px;margin:0 auto;padding:24px 16px 60px}
+.tabs{display:flex;margin-bottom:24px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tab-btn{flex:1;padding:14px 12px;border:none;background:transparent;color:var(--muted);font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit;position:relative}
+.tab-btn:hover{color:var(--text);background:#f5f6f8}
+.tab-btn.active{color:var(--accent);background:#eff6ff}
+.tab-btn.active::after{content:"";position:absolute;bottom:0;left:20%;right:20%;height:3px;background:var(--accent);border-radius:3px 3px 0 0}
+.tab-panel{display:none}.tab-panel.active{display:block}
+h1{font-size:1.4rem;margin:8px 0 4px}
+.sub{color:var(--muted);font-size:.9rem;margin-bottom:20px}
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:4px}
+input{width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:.92rem;outline:none;font-family:inherit}
+input:focus{border-color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.row.full{grid-template-columns:1fr}
+@media(max-width:560px){.row{grid-template-columns:1fr}}
+.err{color:var(--danger);font-size:.75rem;min-height:14px;margin-top:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+button{border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;cursor:pointer;font-weight:600;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-hover)}
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:#f5f6f8}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--success);color:#fff;padding:10px 18px;border-radius:10px;font-size:.88rem;opacity:0;pointer-events:none;transition:opacity .25s,bottom .25s;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:center;max-width:90vw}
+.toast.show{opacity:1;bottom:calc(36px + env(safe-area-inset-bottom,0px))}.toast.error{background:var(--danger)}
+
+/* ===== سجلات الطلاب ===== */
+.rec-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;border:1px solid var(--border);border-radius:14px;padding:12px 16px;margin-bottom:10px}
+.rec-head h2{margin:0 0 6px;font-size:1.5rem}
+.rec-head p{margin:0;color:var(--muted);font-size:.8rem}
+.head-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{background:#eef3fb;border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:.78rem;font-weight:700;color:#334155}
+.btn-excel{background:var(--accent);color:#fff;padding:10px 16px;font-size:.85rem}
+.btn-print{background:#fff;color:var(--text);border:1px solid var(--border);padding:10px 16px;font-size:.85rem}
+.filter-box{background:var(--soft);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.filter-box h3{margin:0 0 10px;font-size:.88rem}
+.search-row{display:flex;gap:10px;margin-bottom:12px}
+.search-row input{background:#fff;font-size:.85rem}
+.btn-clear{background:#eaeef4;color:var(--text);white-space:nowrap}
+.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.chip{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:7px 14px;font-size:.8rem;font-weight:700;color:var(--text)}
+.chip .n{background:#eef1f5;border-radius:999px;padding:2px 9px;font-size:.75rem}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}.chip.active .n{background:rgba(255,255,255,.25)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.d-new{background:#eab308}.d-prog{background:#3b82f6}.d-done{background:#22c55e}.d-err{background:#ef4444}
+.tip{background:#eff6ff;border:1px solid #dbe7fb;border-radius:12px;padding:10px 14px;font-size:.78rem;color:#475569;margin-bottom:14px}
+.day{border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden;background:var(--soft)}
+.day-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-weight:800;font-size:.95rem}
+.day-count{background:#e4ebf5;border-radius:999px;padding:3px 12px;font-size:.75rem}
+.rec{background:#fff;border-top:3px solid var(--accent);border-bottom:1px solid var(--border);display:flex;gap:14px;padding:16px;flex-wrap:wrap;transition:background .3s,box-shadow .3s}
+.rec-main{flex:1;min-width:280px}
+.rec-side{display:flex;flex-direction:column;gap:8px;width:170px}
+.rec-side button{padding:10px 12px;font-size:.82rem;display:flex;align-items:center;justify-content:center;gap:6px}
+.b-view{background:var(--accent);color:#fff}.b-edit{background:#f3f4f6;color:var(--text)}.b-del{background:#f3f4f6;color:#9ca3af}.b-form{background:var(--accent);color:#fff}
+.b-ms{background:#0078d4;color:#fff}.b-ms:hover{background:#005a9e}
+
+.rec-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.rec-name{color:var(--accent);font-weight:800;font-size:1.05rem;margin:0}
+.rec-code{font-size:.82rem;color:var(--accent);font-weight:700;margin-top:4px}
+.top-badges{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.copy-btn{background:#fff;border:1px solid var(--border);padding:6px 12px;font-size:.78rem;border-radius:8px;cursor:pointer;}
+.status{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 12px;font-size:.75rem;font-weight:700}
+.s-new{background:#fef9c3;color:#854d0e}.s-prog{background:#dbeafe;color:#1e40af}.s-done{background:#dcfce7;color:#166534}.s-err{background:#fee2e2;color:#991b1b}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.cell{background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px 14px;min-width:0}
+.cell .k{font-size:.72rem;color:var(--muted);font-weight:700;margin-bottom:4px}
+.cell .v{font-size:.85rem;font-weight:800;direction:ltr;text-align:right;word-break:break-all}
+.cell.wide{grid-column:1/-1}
+.acc{display:grid;grid-template-columns:1fr 1.4fr;gap:10px}
+.acc .cell .v{text-align:right}
+@media(max-width:560px){.grid,.acc{grid-template-columns:1fr}.rec-side{width:100%;flex-direction:row;flex-wrap:wrap}.rec-side button{flex:1}}
+.empty{color:var(--muted);text-align:center;padding:30px 10px;font-size:.9rem}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+.modal.show{display:flex}
+.modal .box{background:#fff;border-radius:14px;padding:20px;width:100%;max-width:420px}
+.modal .box h3{margin:0 0 14px}.modal .box .f{margin-bottom:12px}
+
+/* ===== حقل الإيميل البديل ===== */
+.alt-email-wrap{display:flex;direction:ltr;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
+.alt-email-wrap input{border:none;border-radius:0;text-align:left;flex:1}
+.alt-email-wrap input:focus{border-color:transparent;outline:none}
+.alt-email-wrap .suffix{background:#f4f7fb;display:flex;align-items:center;padding:0 15px;font-weight:bold;color:var(--muted);border-left:1px solid var(--border);white-space:nowrap}
+
+/* ===== طباعة الجدول ===== */
+#printTableArea{display:none}
+#printTableArea table{width:100%;border-collapse:collapse;font-size:12px}
+#printTableArea th,#printTableArea td{border:1px solid #000;padding:6px 8px;text-align:right}
+#printTableArea th{background:#f0f0f0}
+
+/* ===== Tab 2 ===== */
+.card-wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.panel{background:#fff;border:1px solid #e2e4e9;border-radius:14px;padding:20px}
+.panel h2{margin:0 0 14px;font-size:15px;color:var(--muted);font-weight:600}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:13px;color:var(--muted);margin:0}
+.field input{font-size:14px;padding:10px 12px;border-radius:8px;border:1px solid #d1d5db}
+.field input:focus{outline:2px solid var(--gold);outline-offset:1px}
+#f_email{direction:ltr;text-align:center}
+.btn-gold{width:100%;padding:12px;border:none;border-radius:9px;cursor:pointer;background:var(--green);color:#fff;font-size:15px;font-weight:700;font-family:inherit}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+#card{background:#fff;border:2px solid var(--card-border);border-radius:4px;padding:28px 22px 20px;text-align:center}
+.emblem{width:72px;height:72px;margin:0 auto 10px;border-radius:50%;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:11px;font-weight:700;line-height:1.3;padding:4px}
+.ministry{color:var(--gold);font-weight:800;font-size:17px;margin:2px 0}
+.org-sub{color:var(--muted);font-size:11px;margin:0 0 10px}
+.title{display:inline-block;border:1px solid var(--card-border);border-radius:6px;padding:6px 22px;font-weight:800;color:var(--red);font-size:15px;margin-bottom:16px}
+.ok-box{border:1px solid var(--card-border);border-radius:6px;padding:10px;margin-bottom:8px;background:#eaf7ee}
+.ok-box .check{color:var(--green);font-weight:800;font-size:14px}
+.ok-box .sub{color:var(--muted);font-size:11px;margin:4px 0 0}
+.section-title{background:#faf3e0;border:1px solid var(--card-border);border-radius:6px;padding:8px;font-weight:800;font-size:13px;margin:18px 0 0}
+table.card-table{width:100%;border-collapse:collapse;margin-top:10px}
+table.card-table td{border:1px solid var(--card-border);padding:10px 12px;font-size:13.5px}
+table.card-table td.label{width:38%;background:#faf7ee;font-weight:700;color:var(--muted)}
+table.card-table td.value{font-weight:800}
+#o_email{direction:ltr;text-align:center;display:block}
+.footer{margin-top:18px;color:var(--red);font-size:10.5px;line-height:1.8}
+.actions-card{display:flex;gap:10px}
+.actions-card .btn-gold{background:var(--gold)}
+.actions-card .btn-gold.secondary{background:transparent;color:var(--text);border:1px solid #d1d5db}
+
+@keyframes flashHighlight{
+0%{background-color:#fff;box-shadow:none}
+50%{background-color:#eff6ff;box-shadow:0 0 15px rgba(37,99,235,.4);border-color:var(--accent)}
+100%{background-color:#fff;box-shadow:none}
+}
+.highlight-card{animation:flashHighlight 2s ease-in-out}
+
+/* ===== صفحة تحميل الإضافة ===== */
+#downloadPage{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;overflow-y:auto;padding:20px}
+#downloadPage.show{display:flex;align-items:center;justify-content:center}
+.dl-container{background:#fff;max-width:650px;width:100%;border-radius:16px;box-shadow:0 4px 15px rgba(0,0,0,.05);padding:40px 35px;text-align:center;border:1px solid var(--border);position:relative}
+.dl-close{position:absolute;top:15px;right:15px;background:#f1f5f9;color:#333;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px;border:none}
+.dl-close:hover{background:#e2e8f0}
+.dl-logo{width:110px;height:110px;margin:0 auto 20px;border-radius:50%;object-fit:contain}
+.dl-container h1{font-size:1.8rem;margin-bottom:12px;color:var(--text);font-weight:800}
+.dl-sub{color:var(--muted);margin-bottom:20px;font-size:1rem}
+.dl-badge{display:inline-block;background:#eff6ff;color:var(--primary);padding:8px 20px;border-radius:50px;font-weight:700;font-size:1rem;margin-bottom:20px;border:1px solid #bfdbfe}
+.dl-desc{color:var(--text);line-height:1.8;margin-bottom:25px;font-size:1.05rem}
+.dl-browser{margin-bottom:25px;font-size:1.05rem;font-weight:600}
+.dl-browser strong{color:var(--accent)}
+.dl-btn{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:white;text-decoration:none;padding:14px 35px;border-radius:10px;font-size:1.1rem;font-weight:bold;transition:background .2s;width:100%;max-width:320px;margin:0 auto 35px;box-shadow:0 4px 6px rgba(37,99,235,.2)}
+.dl-btn:hover{background:var(--accent-hover)}
+.dl-btn svg{margin-left:10px;width:22px;height:22px}
+.dl-inst{background:#f1f5f9;border-radius:12px;padding:25px;text-align:right;border:1px solid var(--border)}
+.dl-inst h3{margin-top:0;margin-bottom:15px;font-size:1.15rem;color:var(--text);border-bottom:2px solid #e2e8f0;padding-bottom:10px}
+.dl-inst ol{margin:0;padding-right:20px;color:var(--text);line-height:1.9;font-size:.98rem}
+.dl-inst code{background:#e2e8f0;padding:3px 8px;border-radius:6px;font-family:monospace;direction:ltr;display:inline-block;font-size:.9rem;color:#b91c1c}
+.dl-warning{margin-top:20px;color:#b91c1c;background:#fef2f2;padding:10px 15px;border-radius:8px;border:1px solid #fecaca;font-size:.9rem;font-weight:600}
+
+@media print{
+body *{visibility:hidden}
+#card,#card *{visibility:visible}
+#card{position:absolute;left:0;top:0;width:100%;border:2px solid var(--card-border)!important;padding:28px 22px 20px!important;margin:0!important}
+body.print-records *{visibility:hidden}
+body.print-records #printTableArea,body.print-records #printTableArea *{visibility:visible}
+body.print-records #printTableArea{display:block!important;position:absolute;left:0;top:0;width:100%;padding:16px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-reg" onclick="switchTab('tab-reg')">📋 تسجيل البيانات</button>
+    <button class="tab-btn" data-tab="tab-card" onclick="switchTab('tab-card')">🪪 بطاقة الحساب</button>
+    <button class="tab-btn" onclick="openDownloadPage()" style="color:var(--accent); font-weight:bold;">⬇️ تحميل الإضافة</button>
+  </div>
+
+  <div id="tab-reg" class="tab-panel active">
+    <h1>تسجيل بيانات الطلاب</h1>
+    <div class="sub">إدخال الرقم القومي وكود الطالب — سيتم سحب اسم الطالب تلقائيًا من الوزارة بعد التفعيل.</div>
+    <div class="card">
+      <div class="row">
+        <div><label for="nationalId">الرقم القومي</label><input id="nationalId" inputmode="numeric" maxlength="14" placeholder="14 رقم" dir="ltr"/><div class="err" id="nidErr"></div></div>
+        <div><label for="studentCode">كود الطالب</label><input id="studentCode" inputmode="numeric" placeholder="كود الطالب" dir="ltr"/><div class="err" id="codeErr"></div></div>
+      </div>
+      <div class="row full"><div><label for="phone">رقم الهاتف</label>
+        <div style="display:flex;gap:8px"><input id="phone" inputmode="numeric" placeholder="01xxxxxxxxx" dir="ltr" style="text-align:center"/><button class="btn-secondary" onclick="generatePhone()" style="white-space:nowrap">توليد رقم</button></div>
+      </div></div>
+      <div class="row full">
+        <div>
+          <label for="altEmail">البريد الإلكتروني البديل</label>
+          <div class="alt-email-wrap">
+            <input id="altEmail" placeholder="اكتب اسم الإيميل هنا" dir="ltr"/>
+            <span class="suffix">@gmail.com</span>
+          </div>
+        </div>
+      </div>
+      <div class="actions"><button class="btn-primary" onclick="createAccountDirect()">إنشاء حساب</button><button class="btn-secondary" onclick="clearForm()">مسح الحقول</button></div>
+    </div>
+
+    <!-- سجلات الطلاب -->
+    <div class="rec-head">
+      <div class="head-left">
+        <button class="btn-excel" onclick="exportExcel()">⬇ تحميل Excel</button>
+        <button class="btn-print" onclick="printRecordsTable()">🖨️ طباعة الجدول</button>
+        <span class="pill" id="recCount">عرض 0 من 0 سجل</span>
+      </div>
+      <div style="text-align:right">
+        <h2>سجلات الطلاب</h2>
+        <p>تابع حالة كل طالب، استكمل التسجيل، أو احذف بيانات الطلاب الذين لم يبدأوا أو ما زالوا في مرحلة الاستكمال.</p>
+      </div>
+    </div>
+    <div class="filter-box">
+      <h3>🔎 فلترة السجلات</h3>
+      <div class="search-row">
+        <input id="q" placeholder="ابحث بالاسم أو الكود أو الرقم القومي أو الإيميل أو الهاتف" oninput="setSearch(this.value)"/>
+        <button class="btn-clear" onclick="clearFilter()">مسح الفلتر</button>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="tip">💡 كل بيانات الطالب ظاهرة بالكامل هنا بدون الحاجة للتمرير الأفقي. يمكنك تعديل أي طالب مباشرة من زر ✏️ <b>تعديل البيانات</b>.</div>
+    <div id="recList"></div>
+    <div class="empty" id="emptyState">لا توجد بيانات محفوظة بعد</div>
+    <div style="text-align:left;margin-top:10px"><button class="btn-secondary" style="color:var(--danger)" onclick="clearAll()">حذف الكل</button></div>
+  </div>
+
+  <div id="tab-card" class="tab-panel">
+    <div class="card-wrap">
+      <div class="panel" id="formPanel">
+        <h2>بيانات الطالب</h2>
+        <div class="field"><label>اسم الطالب</label><input id="f_name" placeholder="مثال: عبد الرحمن أنور راضي عامر"/></div>
+        <div class="field"><label>كود الطالب</label><input id="f_code" placeholder="مثال: 473849300" inputmode="numeric"/></div>
+        <div class="field"><label>الرقم القومي (لاستخراج الباسورد تلقائياً فقط)</label><input id="f_nid" placeholder="مثال: 31203130101247" inputmode="numeric" maxlength="14" oninput="autoPassFromNid()"/><div class="hint" id="nidHint"></div></div>
+        <div class="field"><label>الإيميل الموحد</label><input id="f_email" placeholder="مثال: 473849300@cairo6.moe.edu.eg" dir="ltr"/></div>
+        <div class="field"><label>باسورد الإيميل الموحد</label><input id="f_pass" placeholder="يُملأ تلقائياً من الرقم القومي، أو اكتبه يدوياً"/></div>
+        <button class="btn-gold" onclick="renderCard()">إنشاء البطاقة</button>
+      </div>
+      <div class="panel" id="card">
+        <div class="emblem">شعار<br/>الجهة</div>
+        <div class="ministry">وزارة التربية والتعليم</div>
+        <div class="org-sub">بوابة إنشاء البريد الإلكتروني الموحد للطلاب والمعلمين</div>
+        <div class="title">تسجيل البيانات</div>
+        <div class="ok-box"><div class="check">✔ تم إنشاء الحساب بنجاح</div><div class="sub">قم بكتابة وحفظ اسم الحساب وكلمة المرور في مكان آمن</div></div>
+        <div class="section-title">بيانات حساب البريد الموحد</div>
+        <table class="card-table">
+          <tr><td class="label">اسم الطالب</td><td class="value" id="o_name">—</td></tr>
+          <tr><td class="label">كود الطالب</td><td class="value" id="o_code">—</td></tr>
+          <tr><td class="label">الإيميل الموحد</td><td class="value" id="o_email">—</td></tr>
+          <tr><td class="label">باسورد الإيميل الموحد</td><td class="value" id="o_pass">—</td></tr>
+        </table>
+        <div class="footer">جميع الحقوق محفوظة محافظة مركز القاهرة<br/>#كرتونة مقال</div>
+      </div>
+      <div class="actions-card"><button class="btn-gold" onclick="printCard()">🖨️ طباعة / حفظ PDF</button><button class="btn-gold secondary" onclick="resetForm()">تفريغ الحقول</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ صفحة تحميل الإضافة (المخفية) -->
+<div id="downloadPage">
+    <div class="dl-container">
+        <button class="dl-close" onclick="closeDownloadPage()">✖</button>
+        
+        <img src="https://upload.wikimedia.org/wikipedia/ar/thumb/8/85/%D8%B4%D8%B9%D8%A7%D8%B1_%D9%88%D8%B2%D8%A7%D8%B1%D8%A9_%D8%A7%D9%84%D8%AA%D8%B1%D8%A8%D9%8A%D8%A9_%D9%88%D8%A7%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85_%D8%A7%D9%84%D9%85%D8%B5%D8%B1%D9%8A%D8%A9.svg/200px-%D8%B4%D8%B9%D8%A7%D8%B1_%D9%88%D8%B2%D8%A7%D8%B1%D8%A9_%D8%A7%D9%84%D8%AA%D8%B1%D8%A8%D9%8A%D8%A9_%D9%88%D8%A7%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85_%D8%A7%D9%84%D9%85%D8%B5%D8%B1%D9%8A%D8%A9.svg.png" alt="لوجو" class="dl-logo">
+        
+        <h1>إضافة متصفح مركز فكرة</h1>
+        <p class="dl-sub">الإصدار الحالي المعتمد للتنزيل من الموقع:</p>
+        
+        <div class="dl-badge">Fekra Ministry Helper V1.14.0</div>
+        
+        <p class="dl-desc">
+            تساعد الإضافة على ترحيل بيانات الطالب واسمه وكود التأكيد المرتبط بسجله في فكرة. تعمل التعبئة أثناء وجود تبويب موقع فكرة مفتوحًا.
+        </p>
+        
+        <p class="dl-browser">المتصفح الحالي: <strong>Google Chrome / Microsoft Edge</strong></p>
+
+        <!-- ⚠️ غير الرابط ده لرابط ملف الـ ZIP بتاعك -->
+        <a href="Fekra-Ministry-Helper-Chrome-Edge-V1.12.4.rar" download class="dl-btn">
+            تحميل أحدث إضافة
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+        </a>
+
+        <div class="dl-inst">
+            <h3>طريقة التثبيت:</h3>
+            <ol>
+                <li>حمّل الملف وفك ضغطه في مجلد ثابت على جهازك.</li>
+                <li>افتح <code>chrome://extensions</code> أو <code>edge://extensions</code>.</li>
+                <li>فعّل <strong>وضع المطور (Developer mode)</strong> ثم اضغط <strong>تحميل إضافة غير مضغوطة (Load unpacked)</strong> واختر المجلد الذي يحتوي على <code>manifest.json</code>.</li>
+                <li>إذا كانت نسخة أقدم مثبتة، عطّلها وأزلها قبل تحميل النسخة الجديدة لتجنب تشغيل نسختين معًا.</li>
+            </ol>
+            <div class="dl-warning">⚠️ تنبيه: احتفظ بمجلد الإضافة على جهازك، لأن المتصفح يقرأ الملفات منه مباشرة.</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="editModal"><div class="box">
+  <h3>✏️ تعديل بيانات الطالب</h3>
+  <div class="f"><label>اسم الطالب</label><input id="e_name"/></div>
+  <div class="f"><label>الرقم القومي</label><input id="e_nid" inputmode="numeric" maxlength="14" dir="ltr"/></div>
+  <div class="f"><label>كود الطالب</label><input id="e_code" inputmode="numeric" dir="ltr"/></div>
+  <div class="f"><label>الهاتف</label><input id="e_phone" inputmode="numeric" dir="ltr"/></div>
+  <div class="f"><label>البريد الإلكتروني البديل</label><input id="e_altEmail" dir="ltr" style="text-align:left"/></div>
+  <div class="actions"><button class="btn-primary" onclick="saveEdit()">حفظ</button><button class="btn-secondary" onclick="closeEdit()">إلغاء</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<div id="printTableArea"></div>
+
+<script>
+function escapeHtml(s){if(!s)return'';const d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function switchTab(id){document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelector(`.tab-btn[data-tab="${id}"]`).classList.add("active")}
+function printCard(){document.title="بطاقة الحساب";window.print();setTimeout(()=>{document.title="تسجيل بيانات الطلاب"},100)}
+
+// ✅ دوال فتح وقفل صفحة تحميل الإضافة
+function openDownloadPage() {
+  document.getElementById('downloadPage').classList.add('show');
+  document.body.style.overflow = 'hidden'; // منع الأسكرول للخلفية
+}
+function closeDownloadPage() {
+  document.getElementById('downloadPage').classList.remove('show');
+  document.body.style.overflow = ''; // إرجاع الأسكرول
+}
+
+const STORAGE_KEY="studentRecords_v2";
+function loadRecords(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]}catch(e){return[]}}
+function saveRecords(r){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(r))}catch(e){}}
+let records=loadRecords();
+let filterStatus="all",searchText="",editingId=null;
+
+function extractBirthDate(nid){
+  if(!/^\d{14}$/.test(nid))return null;
+  const c=nid[0]==="2"?1900:nid[0]==="3"?2000:null;if(!c)return null;
+  const yy=nid.substring(1,3),mm=nid.substring(3,5),dd=nid.substring(5,7);
+  if(+mm<1||+mm>12||+dd<1||+dd>31)return null;
+  return{display:`${dd}/${mm}/${c+ +yy}`,yymmdd:yy+mm+dd};
+}
+document.getElementById("nationalId").addEventListener("input",e=>{
+  e.target.value=e.target.value.replace(/\D/g,"").slice(0,14);
+  document.getElementById("nidErr").textContent=(e.target.value.length===14&&!extractBirthDate(e.target.value))?"الرقم القومي غير صالح":"";
+});
+function clearForm(){['nationalId','studentCode','phone','altEmail'].forEach(i=>document.getElementById(i).value='');document.getElementById('nidErr').textContent='';document.getElementById('codeErr').textContent=''}
+function generatePhone(){const p=["010","011","012","015"][Math.floor(Math.random()*4)];document.getElementById("phone").value=p+Math.floor(10000000+Math.random()*90000000)}
+
+async function createAccountDirect(){
+  const nid=document.getElementById('nationalId').value.trim();
+  const code=document.getElementById('studentCode').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const altEmailInput=document.getElementById('altEmail').value.trim();
+
+  if(!nid||nid.length!==14||!extractBirthDate(nid)){showToast('الرجاء إدخال رقم قومي صحيح',true);return}
+  if(!code){showToast('الرجاء إدخال كود الطالب',true);return}
+
+  const dupRecord=records.find(r=>r.studentCode===code||r.nationalId===nid);
+  if(dupRecord){
+    if(dupRecord.studentCode === code) {
+        showToast('⚠️ هذا الحساب موجود بالفعل!',true);
+        if(filterStatus!=='all'||searchText){filterStatus='all';searchText='';document.getElementById('q').value='';renderTable()}
+        setTimeout(()=>{
+          const dupCard=document.querySelector(`.rec[data-id="${dupRecord.id}"]`);
+          if(dupCard){
+            dupCard.scrollIntoView({behavior:'smooth',block:'center'});
+            dupCard.classList.add('highlight-card');
+            setTimeout(()=>dupCard.classList.remove('highlight-card'),2500);
+          }
+        },200);
+        return;
+    }
+  }
+
+  // ✅ حساب الباسورد (لو توأم بيزود 1)
+  let finalPassword = 'Std#' + extractBirthDate(nid).yymmdd;
+  
+  const twinRecords = records.filter(r => r.nationalId === nid);
+  if (twinRecords.length > 0) {
+    const lastTwin = twinRecords[twinRecords.length - 1];
+    let baseNum = parseInt(lastTwin.birthDate.replace('Std#', ''), 10);
+    if (!isNaN(baseNum)) {
+       baseNum += 1;
+       finalPassword = 'Std#' + String(baseNum).padStart(6, '0');
+    }
+  }
+
+  const finalAltEmail=altEmailInput?(altEmailInput+"@gmail.com"):(code+"@fekragmail.com");
+
+  const record={
+    id:Date.now(),createdAt:Date.now(),status:'new',studentName:"",
+    nationalId:nid,studentCode:code,phone,
+    birthDate: finalPassword,
+    altEmail:finalAltEmail
+  };
+
+  records.push(record);saveRecords(records);renderTable();clearForm();
+
+  setTimeout(()=>{
+    const newCard=document.querySelector(`.rec[data-id="${record.id}"]`);
+    if(newCard){
+      newCard.scrollIntoView({behavior:'smooth',block:'center'});
+      newCard.classList.add('highlight-card');
+      setTimeout(()=>newCard.classList.remove('highlight-card'),2500);
+    }
+  },400);
+
+  try{
+    await sendToExtension(record);
+    record.status='prog';saveRecords(records);renderTable();
+    showToast('✅ تم الحفظ! جاري فتح الوزارة...');
+    setTimeout(()=>window.open(targetUrl(record),"_blank"),1000);
+  }catch(e){record.status='err';saveRecords(records);renderTable();showToast('⚠️ الإضافة لم تستجب! تأكد من تثبيتها.',true)}
+}
+
+function sendToExtension(record){
+  return new Promise((resolve,reject)=>{
+    const rid=String(record.id);
+    const h=ev=>{if(ev.source!==window)return;if(ev.data?.type==="FEKRA_PAYLOAD_SAVED"&&ev.data.recordId===rid){window.removeEventListener("message",h);clearTimeout(t);resolve(true)}};
+    window.addEventListener("message",h);
+    const t=setTimeout(()=>{window.removeEventListener("message",h);reject(new Error("No response"))},2500);
+    window.postMessage({type:"FEKRA_SET_PAYLOAD",payload:{recordId:rid,studentName:record.studentName||"",nationalId:record.nationalId,studentCode:record.studentCode,unifiedEmail:record.studentCode?record.studentCode+'@cairo6.moe.edu.eg':"",unifiedPassword:record.birthDate,phone:record.phone,altEmail:(record.altEmail||"").split("").reverse().join("")}},"*");
+  });
+}
+
+function statusOf(r){
+  if(r.unifiedEmail&&r.studentName)return'done';
+  if(r.status==='err')return'err';
+  if(r.status==='prog')return'prog';
+  return'new';
+}
+const ST={new:['لم يبدأ','s-new','d-new'],prog:['جاري التسجيل','s-prog','d-prog'],done:['تم إنشاء الحساب','s-done','d-done'],err:['حدث خطأ','s-err','d-err']};
+function targetUrl(r){return "https://office365.emis.gov.eg/student-register/register"}
+function matches(r){
+  if(filterStatus!=='all'&&statusOf(r)!==filterStatus)return false;
+  if(!searchText)return true;
+  const s=searchText.toLowerCase();
+  return [r.studentName,r.studentCode,r.nationalId,r.unifiedEmail,r.phone].some(v=>(v||'').toString().toLowerCase().includes(s));
+}
+function setSearch(v){searchText=v.trim();renderTable()}
+function setFilter(s){filterStatus=s;renderTable()}
+function clearFilter(){filterStatus='all';searchText='';document.getElementById('q').value='';renderTable()}
+
+function fmtDay(ts){return new Date(ts).toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+function fmtShort(ts){return new Date(ts).toLocaleDateString('ar-EG',{year:'numeric',month:'2-digit',day:'2-digit'})}
+function dayKey(ts){const d=new Date(ts);return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()}
+
+function renderTable(){
+  const counts={all:records.length,new:0,prog:0,done:0,err:0};
+  records.forEach(r=>counts[statusOf(r)]++);
+  const chip=(k,label,dot)=>`<button class="chip ${filterStatus===k?'active':''}" onclick="setFilter('${k}')" style="padding:7px 14px">${dot?`<span class="dot ${dot}"></span>`:''}${label}<span class="n">${counts[k]}</span></button>`;
+  document.getElementById('chips').innerHTML=chip('err','حدث خطأ','d-err')+chip('done','تم إنشاء الحساب','d-done')+chip('prog','جاري التسجيل','d-prog')+chip('new','لم يبدأ','d-new')+chip('all','الكل','');
+  const list=records.filter(matches).sort((a,b)=>(b.createdAt||b.id)-(a.createdAt||a.id));
+  document.getElementById('recCount').textContent=`عرض ${list.length} من ${records.length} سجل`;
+  const box=document.getElementById('recList'),empty=document.getElementById('emptyState');
+  if(!list.length){box.innerHTML='';empty.style.display='block';empty.textContent=records.length?'لا توجد نتائج مطابقة':'لا توجد بيانات محفوظة بعد';return}
+  empty.style.display='none';
+  const groups={};
+  list.forEach(r=>{const ts=r.createdAt||r.id;(groups[dayKey(ts)]=groups[dayKey(ts)]||{ts,items:[]}).items.push(r)});
+  box.innerHTML=Object.values(groups).map(g=>`
+    <div class="day">
+      <div class="day-head"><span>📅 ${fmtDay(g.ts)}</span><span class="day-count">${g.items.length} إيميل</span></div>
+      ${g.items.map(cardHtml).join('')}
+    </div>`).join('');
+}
+function cardHtml(r){
+  const s=statusOf(r),[lbl,cls,dot]=ST[s];
+  const done=s==='done';
+  return `<div class="rec" data-id="${r.id}">
+    <div class="rec-main">
+      <div class="rec-top">
+        <div class="top-badges">
+          <span class="status ${cls}"><span class="dot ${dot}"></span>${lbl}</span>
+          <button class="copy-btn" onclick="copyRec(${r.id})">📋 نسخ البيانات</button>
+          <button class="copy-btn" style="background:#0078d4; color:#fff; border:none;" onclick="openMicrosoftLogin(${r.id})">🔐 تسجيل دخول Microsoft</button>
+        </div>
+        <div style="text-align:right">
+          <p class="rec-name">${escapeHtml(r.studentName||'⏳ بانتظار الوزارة...')}</p>
+          <div class="rec-code">كود الطالب: ${escapeHtml(r.studentCode)}</div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="cell"><div class="k">الرقم القومي</div><div class="v">${escapeHtml(r.nationalId)}</div></div>
+        <div class="cell"><div class="k">رقم الهاتف</div><div class="v">${escapeHtml(r.phone||'—')}</div></div>
+      </div>
+      <div class="acc">
+        <div class="cell"><div class="k">تاريخ إنشاء الإيميل</div><div class="v">${done?fmtShort(r.doneAt||r.createdAt||r.id):'—'}</div></div>
+        <div class="cell">
+          <div class="k">الإيميل الموحد</div>
+          <div class="v" style="color:var(--green)">${escapeHtml(r.unifiedEmail||'⏳ بانتظار الوزارة...')}</div>
+          <div class="k" style="margin-top:10px">باسورد الإيميل الموحد</div>
+          <div class="v">${escapeHtml(r.birthDate)}</div>
+        </div>
+      </div>
+    </div>
+    <div class="rec-side">
+      <button class="b-view" onclick="viewAccount(${r.id})">▶ عرض الحساب</button>
+      <button class="b-edit" onclick="openEdit(${r.id})">✏️ تعديل بيانات الطالب</button>
+      <button class="b-del" onclick="deleteRecord(${r.id})">🗑 حذف البيانات</button>
+      <button class="b-form" onclick="window.open(targetUrl(records.find(x=>x.id===${r.id})),'_blank')">🌐 موقع الاستمارة</button>
+      <button class="b-view" style="background:var(--gold)" onclick="printStudent(${r.id})">🖨️ طباعة بيانات الطالب</button>
+    </div>
+  </div>`;
+}
+
+async function openMicrosoftLogin(id) {
+  const r = records.find(x => x.id === id);
+  if (!r) return;
+
+  const email = r.unifiedEmail || (r.studentCode ? r.studentCode + '@cairo6.moe.edu.eg' : '');
+  
+  if (!email) {
+    showToast('⚠️ لا يوجد إيميل مسجل لهذا الطالب!', true);
+    return;
+  }
+
+  try {
+    await sendToExtension(r);
+  } catch(e) {}
+
+  window.open('https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=4f04016c-2a59-4bc4-ad37-76342e4bc05c&redirect_uri=https%3A%2F%2Fmoe-register.emis.gov.eg%2Fcomplete&response_type=code&scope=openid%20profile%20offline_access%20user.read&nonce=8ae73c08bd7ec9ed0fc267c9c26c6daab8Mist5Nd&state=40e7b85d2d4a9e1abdad46cfcf96fd59673sKQgaQ&code_challenge=yvk-0idb6J_c5w6g87IdbsQwQPwk5jlqdxQMtu-RQyE&code_challenge_method=S256&prompt=select_account', '_blank');
+}
+
+async function viewAccount(id){
+  const r=records.find(x=>x.id===id);if(!r)return;
+  try{
+    await sendToExtension(r);
+    if(statusOf(r)!=='done'){r.status='prog';saveRecords(records);renderTable()}
+    showToast('✅ تم الحفظ! جاري فتح الوزارة...');
+    setTimeout(()=>window.open(targetUrl(r),"_blank"),1000);
+  }catch(e){
+    if(statusOf(r)!=='done'){r.status='err';saveRecords(records);renderTable()}
+    showToast('⚠️ الإضافة لم تستجب! تأكد من تثبيتها.',true);
+  }
+}
+function printStudent(id){
+  const r=records.find(x=>x.id===id);if(!r)return;
+  f_name.value=r.studentName||'';f_code.value=r.studentCode||'';f_nid.value=r.nationalId||'';f_pass.value=r.birthDate||'';
+  f_email.value=r.unifiedEmail||(r.studentCode?r.studentCode+'@cairo6.moe.edu.eg':'');
+  renderCard();switchTab('tab-card');
+  setTimeout(()=>window.print(),300);
+}
+
+function copyRec(id){
+  const r=records.find(x=>x.id===id);if(!r)return;
+  const txt=`الاسم: ${r.studentName||''}\nالكود: ${r.studentCode}\nالرقم القومي: ${r.nationalId}\nالهاتف: ${r.phone||''}\nالإيميل: ${r.unifiedEmail||(r.studentCode+'@cairo6.moe.edu.eg')}\nالباسورد: ${r.birthDate}`;
+  (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>showToast('📋 تم نسخ البيانات')).catch(()=>{const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();showToast('📋 تم نسخ البيانات')});
+}
+function deleteRecord(id){if(confirm('حذف بيانات هذا الطالب؟')){records=records.filter(r=>r.id!==id);saveRecords(records);renderTable()}}
+function clearAll(){if(confirm('حذف الكل؟')){records=[];saveRecords(records);renderTable()}}
+
+function openEdit(id){
+  const r=records.find(x=>x.id===id);if(!r)return;editingId=id;
+  e_name.value=r.studentName||'';
+  e_nid.value=r.nationalId||'';
+  e_code.value=r.studentCode||'';
+  e_phone.value=r.phone||'';
+  e_altEmail.value=r.altEmail || (r.studentCode ? r.studentCode + '@fekragmail.com' : ''); 
+  document.getElementById('editModal').classList.add('show');
+}
+function closeEdit(){document.getElementById('editModal').classList.remove('show');editingId=null}
+function saveEdit(){
+  const r=records.find(x=>x.id===editingId);if(!r)return;
+  const nid=e_nid.value.trim(),code=e_code.value.trim();
+  const newAltEmail = e_altEmail.value.trim();
+
+  if(!extractBirthDate(nid)){showToast('الرقم القومي غير صالح',true);return}
+  if(!code){showToast('الرجاء إدخال كود الطالب',true);return}
+  
+  r.studentName=e_name.value.trim();
+  r.nationalId=nid;
+  r.studentCode=code;
+  r.phone=e_phone.value.trim();
+  
+  if (r.birthDate.startsWith('Std#')) {
+  } else {
+    r.birthDate='Std#'+extractBirthDate(nid).yymmdd;
+  }
+  
+  if(newAltEmail) {
+    r.altEmail = newAltEmail;
+  } else {
+    r.altEmail = code + "@fekragmail.com"; 
+  }
+
+  saveRecords(records);renderTable();closeEdit();showToast('✅ تم حفظ التعديل');
+}
+
+function exportExcel(){
+  if(!records.length){showToast('لا توجد بيانات للتصدير',true);return}
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const rows=[['#','اسم الطالب','الرقم القومي','كود الطالب','الهاتف','الإيميل الموحد','الباسورد','الحالة']];
+  records.forEach((r,i)=>rows.push([i+1,r.studentName,r.nationalId,r.studentCode,r.phone,r.unifiedEmail||r.studentCode+'@cairo6.moe.edu.eg',r.birthDate,ST[statusOf(r)][0]]));
+  const blob=new Blob(["\ufeff"+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='students.csv';a.click();
+}
+
+function printRecordsTable(){
+  if(!records.length){showToast('لا توجد بيانات للطباعة',true);return}
+  const list=records.slice().sort((a,b)=>(a.createdAt||a.id)-(b.createdAt||b.id));
+  const rows=list.map((r,i)=>`<tr>
+      <td>${i+1}</td>
+      <td>${escapeHtml(r.studentName||'—')}</td>
+      <td style="direction:ltr">${escapeHtml(r.nationalId)}</td>
+      <td style="direction:ltr">${escapeHtml(r.studentCode)}</td>
+      <td style="direction:ltr">${escapeHtml(r.phone||'—')}</td>
+      <td style="direction:ltr">${escapeHtml(r.unifiedEmail||'—')}</td>
+      <td style="direction:ltr">${escapeHtml(r.birthDate)}</td>
+      <td>${ST[statusOf(r)][0]}</td>
+    </tr>`).join('');
+  document.getElementById('printTableArea').innerHTML=`
+    <h2 style="text-align:center;margin:0 0 14px">سجلات الطلاب (${list.length} سجل)</h2>
+    <table>
+      <thead><tr><th>#</th><th>اسم الطالب</th><th>الرقم القومي</th><th>كود الطالب</th><th>الهاتف</th><th>الإيميل الموحد</th><th>الباسورد</th><th>الحالة</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  document.body.classList.add('print-records');
+  document.title="سجلات الطلاب";
+  window.print();
+  setTimeout(()=>{document.body.classList.remove('print-records');document.title="تسجيل بيانات الطلاب"},300);
+}
+
+function fillCardFromRecord(id){
+  const r=records.find(x=>x.id===id);if(!r)return;
+  f_name.value=r.studentName||'';f_code.value=r.studentCode||'';f_nid.value=r.nationalId||'';f_pass.value=r.birthDate||'';
+  f_email.value=r.unifiedEmail||(r.studentCode?r.studentCode+'@cairo6.moe.edu.eg':'');
+  renderCard();switchTab('tab-card');
+}
+let toastTimer;
+function showToast(msg,err=false){const t=document.getElementById('toast');t.innerHTML=msg;t.className='toast show'+(err?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3500)}
+
+function syncNameFromExtension(){window.postMessage({type:"FEKRA_GET_LAST_RESULT"},"*")}
+window.addEventListener('message',ev=>{
+  if(ev.source!==window)return;
+  if(ev.data?.type==="FEKRA_LAST_RESULT"&&ev.data.payload){
+    const{recordId,studentName,unifiedEmail}=ev.data.payload;
+    const rec=records.find(r=>String(r.id)===String(recordId));
+    if(rec){
+      let u=false;
+      if(studentName&&rec.studentName!==studentName){rec.studentName=studentName;u=true}
+      if(unifiedEmail&&rec.unifiedEmail!==unifiedEmail){rec.unifiedEmail=unifiedEmail;u=true}
+      if(u){if(rec.unifiedEmail&&rec.studentName&&!rec.doneAt)rec.doneAt=Date.now();saveRecords(records);renderTable();showToast('🎉 تم تحديث البيانات من الوزارة!')}
+    }
+  }
+});
+setInterval(syncNameFromExtension,3000);syncNameFromExtension();
+
+function renderCard(){
+  o_name.textContent=f_name.value||"—";o_code.textContent=f_code.value||"—";
+  o_email.textContent=f_email.value||"—";o_pass.textContent=f_pass.value||"—";
+}
+function autoPassFromNid(){const n=f_nid.value.trim();if(n.length===14&&/^[0-9]+$/.test(n))f_pass.value="Std#"+n.substring(1,7)}
+function resetForm(){['f_name','f_code','f_email','f_pass','f_nid'].forEach(i=>document.getElementById(i).value='');renderCard()}
+document.getElementById('editModal').addEventListener('click',e=>{if(e.target.id==='editModal')closeEdit()});
+renderTable();
+</script>
+</body>
+</html>
